@@ -1,0 +1,31 @@
+.custom-cursor {
+  position: fixed;
+  width: 40px;
+  height: 40px;
+  border: 2px solid #08CB00;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: all 0.3s ease;
+  mix-blend-mode: difference;
+}
+.custom-cursor-dot {
+  position: fixed;
+  width: 8px;
+  height: 8px;
+  background-color: #08CB00;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10000;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 10px #08CB00;
+}
+
+.custom-cursor[data-cursor-color="orange"] {
+  border-color: #FF6900;
+}
+.custom-cursor-dot[data-cursor-color="orange"] {
+  background-color: #FF6900;
+  box-shadow: 0 0 10px #FF6900;
+}
