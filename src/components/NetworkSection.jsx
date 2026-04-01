@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef, forwardRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 // 6 roles cycling on each node — like Bugcrowd's "Code → Build → Test → Release"
@@ -42,7 +42,7 @@ const NODE_COLORS = [
 const DOT_DUR   = ['3.2s','4s','3.6s','4.4s','3.8s','4.2s'];
 const DOT_BEGIN = ['0s','0.6s','1.2s','1.8s','2.4s','3s'];
 
-export default function NetworkSection() {
+const NetworkSection = forwardRef(function NetworkSectionWithRef(props, ref) {
   const navigate = useNavigate();
   const [roleOffset, setRoleOffset] = useState(0);
   const [fadeIn, setFadeIn] = useState(true);
@@ -55,7 +55,11 @@ export default function NetworkSection() {
         setFadeIn(true);
       }, 350);
     }, 2800);
-    return () => clearInterval(id);
+
+    // Scroll listener moved to Hero3D for perfect sync
+    return () => {
+      clearInterval(id);
+    };
   }, []);
 
   return (
@@ -63,46 +67,48 @@ export default function NetworkSection() {
       <style>{`
         .bc-outer {
           width: 100%;
-          background: #000000;
-          padding: 60px 5vw;
+          background: var(--bg-primary);
+          padding: 150px 9vw;
           box-sizing: border-box;
+          position: relative;
+          overflow: hidden;
+        }
+        /* Soft noise texture */
+        .bc-outer::before {
+          content: '';
+          position: absolute;
+          inset: 0;
+          background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+          pointer-events: none;
+          z-index: 0;
+        }
+        /* Ambient light orb top-right */
+        .bc-outer::after {
+          content: '';
+          position: absolute;
+          width: 600px; height: 600px;
+          border-radius: 50%;
+          background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 65%);
+          top: -120px; right: -120px;
+          pointer-events: none;
+          z-index: 0;
         }
         .bc-wrap {
           width: 100%;
           max-width: 1280px;
           margin: 0 auto;
-          background: #F5E6D3;
-          border-radius: 28px;
+          background: var(--bg-secondary);
+          border: 1px solid var(--glass-border);
+          border-radius: 32px;
           display: flex;
           align-items: center;
           justify-content: center;
-          padding: 70px 5vw;
+          padding: 80px 5vw;
           gap: 5vw;
           box-sizing: border-box;
           position: relative;
           overflow: hidden;
-          box-shadow:
-            0 0 0 1px rgba(255,105,0,0.15),
-            0 4px 20px rgba(255,105,0,0.12),
-            0 12px 60px rgba(0,0,0,0.5);
-        }
-        .bc-wrap::before {
-          content:'';
-          position:absolute;inset:0;
-          border-radius: 28px;
-          background-image:
-            linear-gradient(rgba(0,0,0,0.04) 1px,transparent 1px),
-            linear-gradient(90deg,rgba(0,0,0,0.04) 1px,transparent 1px);
-          background-size:56px 56px;
-          pointer-events:none;
-        }
-        .bc-wrap::after {
-          content:'';
-          position:absolute;
-          right:0; top:10%; bottom:10%; width:50%;
-          border-radius: 28px;
-          background: radial-gradient(ellipse 65% 65% at 60% 50%, rgba(255,105,0,0.14) 0%, transparent 70%);
-          pointer-events:none;
+          box-shadow: 0 40px 100px rgba(0,0,0,0.5);
         }
         .bc-left {
           flex: 0 0 44%;
@@ -117,55 +123,51 @@ export default function NetworkSection() {
           display: inline-flex;
           align-items: center;
           gap: 8px;
-          background: rgba(255,105,0,0.1);
-          border: 1px solid rgba(255,105,0,0.35);
-          color: #cc5500;
-          font-size: 10.5px;
+          background: rgba(8, 203, 0, 0.1);
+          border: 1px solid rgba(8, 203, 0, 0.2);
+          color: var(--accent-green);
+          font-size: 11px;
           font-weight: 700;
-          letter-spacing: 0.18em;
+          letter-spacing: 0.15em;
           text-transform: uppercase;
-          padding: 6px 14px;
+          padding: 8px 16px;
           border-radius: 100px;
-          font-family: 'Inter',sans-serif;
           margin-bottom: 24px;
         }
         .bc-heading {
-          font-family: 'Funnel Display','Inter',sans-serif;
-          font-size: clamp(2.1rem, 3.5vw, 3.2rem);
-          font-weight: 800;
-          color: #1a1a1a;
-          line-height: 1.12;
-          letter-spacing: -0.025em;
+          font-size: clamp(2.1rem, 3.5vw, 3rem);
+          font-weight: 900;
+          color: #fff;
+          line-height: 1.1;
+          letter-spacing: -0.02em;
           margin-bottom: 20px;
         }
         .bc-heading em {
           font-style: normal;
-          background: linear-gradient(135deg, #FF6900 0%, #ff8533 40%, #ffb347 100%);
-          -webkit-background-clip: text;
-          -webkit-text-fill-color: transparent;
-          background-clip: text;
-          filter: drop-shadow(0 2px 16px rgba(255,105,0,0.35));
+          color: var(--accent-green);
+          text-shadow: 0 0 20px rgba(8, 203, 0, 0.3);
         }
         .bc-sub {
-          font-family: 'Inter',sans-serif;
-          font-size: 1rem;
-          color: rgba(40,30,20,0.6);
-          line-height: 1.75;
+          font-size: 1.1rem;
+          color: var(--text-secondary);
+          line-height: 1.7;
           margin-bottom: 40px;
-          max-width: 400px;
+          max-width: 440px;
         }
         .bc-btns { display:flex; gap:14px; flex-wrap:wrap; }
         .bc-btn-primary {
           display:inline-flex; align-items:center;
-          background:#FF6900; color:#fff;
-          font-family:'Inter',sans-serif; font-size:14px; font-weight:700;
-          padding:14px 30px; border-radius:8px; border:none;
+          background: var(--accent-green); color:#000;
+          font-size:14px; font-weight:800;
+          padding:14px 32px; border-radius:100px; border:none;
           cursor:pointer; text-decoration:none;
-          position:relative; overflow:hidden;
-          transition:box-shadow 0.3s ease;
+          transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+          box-shadow: 0 10px 20px rgba(8, 203, 0, 0.15);
         }
         .bc-btn-primary:hover {
-          box-shadow:0 6px 24px rgba(255,105,0,0.35);
+          background: #0aff00;
+          transform: translateY(-3px);
+          box-shadow: 0 15px 30px rgba(8, 203, 0, 0.25);
         }
         .bc-btn-primary .btn-text-wrap {
           display:inline-flex;
@@ -323,18 +325,11 @@ export default function NetworkSection() {
               </circle>
             ))}
 
-            <circle cx={CX} cy={CY} r={HUB_R+18} fill="#FF6900" fillOpacity="0.25" filter="url(#bc-glow-hub)"/>
-            <circle cx={CX} cy={CY} r={HUB_R} fill="#FF6900"/>
+            <circle cx={CX} cy={CY} r={HUB_R+18} fill="none" stroke="#FF6900" strokeWidth="0.5" strokeOpacity="0.2" filter="url(#bc-glow-hub)"/>
+            <circle ref={ref} cx={CX} cy={CY} r={HUB_R} fill="none" stroke="#FF6900" strokeWidth="2.5"/>
             <circle cx={CX} cy={CY} r={HUB_R-10} fill="none"
               stroke="rgba(255,255,255,0.35)" strokeWidth="1.2" strokeDasharray="5 6"
               className="bc-hub-dash"/>
-            <text x={CX} y={CY-7} textAnchor="middle"
-              fill="#fff" fontSize="17" fontWeight="900"
-              fontFamily="'Funnel Display','Inter',Arial,sans-serif" letterSpacing="2.5">IETE</text>
-            <rect x={CX-22} y={CY-1} width="44" height="1.5" fill="rgba(255,255,255,0.6)" rx="1"/>
-            <text x={CX} y={CY+15} textAnchor="middle"
-              fill="rgba(255,255,255,0.7)" fontSize="7"
-              fontFamily="'Inter',Arial,sans-serif" letterSpacing="1.5">EST. 1953</text>
 
             {NODES.map((n, i) => {
               const nx = Math.round(n.x);
@@ -377,4 +372,6 @@ export default function NetworkSection() {
       </section>
     </>
   );
-}
+});
+
+export default NetworkSection;

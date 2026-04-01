@@ -1,12 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { getGallery, addGalleryEntry, updateGalleryEntry, deleteGalleryEntry } from '../../firebase/firestore';
-import { uploadFile } from '../../firebase/storage';
+import { getGallery, addGalleryEntry, updateGalleryEntry, deleteGalleryEntry } from '../../supabase/db';
+import { uploadFile } from '../../supabase/storage';
 import { Plus, Trash2, X, Upload, Loader2, Images } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const G = '#08CB00';
 const INPUT_STYLE = { width:'100%',boxSizing:'border-box',background:'rgba(8,203,0,0.03)',border:'1px solid rgba(8,203,0,0.15)',borderRadius:10,color:'#fff',padding:'10px 12px',fontSize:13,fontFamily:'Inter,sans-serif',outline:'none' };
-const EMPTY = { eventName: '', year: '', images: [] };
+const EMPTY = { event_name: '', year: '', images: [] };
 
 export default function EventGallery() {
   const [albums, setAlbums]   = useState([]);
@@ -19,10 +19,19 @@ export default function EventGallery() {
   const [deleteId, setDeleteId]   = useState(null);
   const fileRef = useRef(null);
 
-  async function load() { setLoading(true); setAlbums(await getGallery()); setLoading(false); }
+  async function load() { 
+    setLoading(true); 
+    try {
+      setAlbums(await getGallery()); 
+    } catch (err) {
+      console.error("Error loading gallery:", err);
+    } finally {
+      setLoading(false); 
+    }
+  }
   useEffect(() => { load(); }, []);
   function openAdd()  { setForm(EMPTY); setEditId(null); setModal('add'); }
-  function openEdit(a) { setForm({ eventName: a.eventName, year: a.year||'', images: a.images||[] }); setEditId(a.id); setModal('edit'); }
+  function openEdit(a) { setForm({ event_name: a.event_name, year: a.year||'', images: a.images||[] }); setEditId(a.id); setModal('edit'); }
 
   async function handleImagesUpload(files) {
     setUploading(true);
@@ -66,7 +75,7 @@ export default function EventGallery() {
                   </div>
                 )}
                 <div style={{ padding:'14px 16px 16px' }}>
-                  <h3 style={{ color:'#fff',fontWeight:700,fontSize:15,margin:0 }}>{album.eventName}</h3>
+                  <h3 style={{ color:'#fff',fontWeight:700,fontSize:15,margin:0 }}>{album.event_name}</h3>
                   {album.year && <p style={{ fontSize:11,color:G,fontWeight:600,margin:'3px 0 0' }}>{album.year}</p>}
                   <p style={{ color:'rgba(255,255,255,0.3)',fontSize:12,margin:'4px 0 12px' }}>{(album.images||[]).length} photos</p>
                   <div style={{ display:'flex',gap:8 }}>
@@ -90,7 +99,7 @@ export default function EventGallery() {
                 <button onClick={() => setModal(null)} style={closeBtn}><X size={18} /></button>
               </div>
               <form onSubmit={handleSave} style={{ display:'flex',flexDirection:'column',gap:14 }}>
-                <Fld label="Event Name" required><input required value={form.eventName} onChange={e => setForm(f => ({ ...f,eventName:e.target.value }))} style={INPUT_STYLE} placeholder="Tech Fest 2025" /></Fld>
+                <Fld label="Event Name" required><input required value={form.event_name} onChange={e => setForm(f => ({ ...f,event_name:e.target.value }))} style={INPUT_STYLE} placeholder="Tech Fest 2025" /></Fld>
                 <Fld label="Year"><input value={form.year} onChange={e => setForm(f => ({ ...f,year:e.target.value }))} style={INPUT_STYLE} placeholder="2025" /></Fld>
                 <Fld label="Photos">
                   <button type="button" onClick={() => fileRef.current?.click()} style={{ ...uploadBtnStyle,width:'100%',justifyContent:'center' }}>

@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { signOut } from '../firebase/auth';
+import { signOut } from '../supabase/auth';
 import {
   LayoutDashboard, CalendarCheck, Trophy, ImageIcon,
-  Users, LogOut, Menu, X, ChevronRight, Bell,
+  Users, LogOut, Menu, X, ChevronRight, Bell, BookOpen, Settings
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -12,7 +12,9 @@ const NAV = [
   { to: '/admin/home-events',  label: 'Home Events',     icon: CalendarCheck,   end: false },
   { to: '/admin/achievements', label: 'Achievements',    icon: Trophy,          end: false },
   { to: '/admin/gallery',      label: 'Event Gallery',   icon: ImageIcon,       end: false },
+  { to: '/admin/departments',  label: 'Departments',     icon: BookOpen,        end: false },
   { to: '/admin/team',         label: 'Team Management', icon: Users,           end: false },
+  { to: '/admin/settings',     label: 'General Settings', icon: Settings,        end: false },
 ];
 
 const PAGE_TITLES = {
@@ -20,7 +22,9 @@ const PAGE_TITLES = {
   '/admin/home-events':   'Home Events',
   '/admin/achievements':  'Dept. Achievements',
   '/admin/gallery':       'Event Gallery',
+  '/admin/departments':   'Dept. Management',
   '/admin/team':          'Team Management',
+  '/admin/settings':      'General Settings',
 };
 
 /* ── Design tokens matching the main site ────────────────── */

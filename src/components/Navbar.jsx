@@ -61,6 +61,11 @@ const Navbar = () => {
     document.fonts.ready.then(() => {
       gsap.set(activeElement, { x: getOffsetLeft(activeButton) });
       gsap.to(activeElement, { '--active-element-show': '1', duration: 0.2 });
+    }).catch(err => {
+      console.warn("Font loading failed or timed out:", err);
+      // Fallback: set position anyway
+      gsap.set(activeElement, { x: getOffsetLeft(activeButton) });
+      gsap.to(activeElement, { '--active-element-show': '1', duration: 0.2 });
     });
   }, [activeLink]);
 

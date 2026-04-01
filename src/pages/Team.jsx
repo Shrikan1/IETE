@@ -1,9 +1,11 @@
-﻿import { motion } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { useRef, useEffect, useState } from 'react';
 import Tilt from 'react-parallax-tilt';
-import { Mail, Linkedin, Users, Award, Calendar, ChevronDown } from 'lucide-react';
-import { getTeam } from '../firebase/firestore';
+import { Mail, Linkedin, Users, Award, Calendar, ChevronDown, Loader2 } from 'lucide-react';
+import { getTeam } from '../supabase/db';
 import './Team.css';
+
+const G = '#08CB00';
 
 const fadeUp = (delay = 0) => ({
   initial: { opacity: 0, y: 40 },
@@ -59,7 +61,7 @@ const FlipCard = ({ member, index, positionColors, positionDescriptions }) => {
         <div className="card-shine-wrap">
           <div className="card-glow student-glow" />
           <div className="avatar-wrap">
-            <img className="avatar" src={member.photoURL || getAvatarUrl(member.name, member.gender)} alt={member.name} />
+            <img className="avatar" src={member.photo_url || getAvatarUrl(member.name, member.gender)} alt={member.name} />
           </div>
           <div className="student-body">
             <h3>{member.name}</h3>
@@ -95,7 +97,7 @@ const FlipCard = ({ member, index, positionColors, positionDescriptions }) => {
               <button className="card-modal-close" onClick={() => setExpanded(false)}>✕</button>
               <div className="card-modal-glow" style={{ background: `radial-gradient(circle at 50% 0%, ${color}44, transparent 65%)` }} />
               <div className="avatar-wrap modal-avatar">
-                <img className="avatar" src={member.photoURL || getAvatarUrl(member.name, member.gender)} alt={member.name} />
+                <img className="avatar" src={member.photo_url || getAvatarUrl(member.name, member.gender)} alt={member.name} />
               </div>
               <h3 className="modal-name">{member.name}</h3>
               <span className="position-badge modal-badge" style={{ background: `${color}22`, color, border: `1px solid ${color}66` }}>
@@ -116,13 +118,24 @@ const FlipCard = ({ member, index, positionColors, positionDescriptions }) => {
 };
 
 const Team = () => {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
   const heroRef = useRef(null);
-  const [firestoreMembers, setFirestoreMembers] = useState(null);
 
   useEffect(() => {
-    getTeam()
-      .then((data) => { if (data.length > 0) setFirestoreMembers(data); })
-      .catch(() => {}); // silently fall back to hardcoded data if Firebase not configured
+    const loadTeam = async () => {
+      try {
+        const data = await getTeam();
+        // Sort by level ascending
+        const sorted = data.sort((a, b) => (a.level || 99) - (b.level || 99));
+        setMembers(sorted);
+      } catch (err) {
+        console.error("Error fetching team:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadTeam();
   }, []);
 
   useEffect(() => {
@@ -137,282 +150,119 @@ const Team = () => {
     return () => hero.removeEventListener('mousemove', handleMouse);
   }, []);
 
-  const headingWords1 = ['Meet', 'the'];
-  const headingWords2 = ['Behind', 'the', 'Mission'];
-  const stats = [
-    { icon: Users, value: '28+', label: 'Members' },
-    { icon: Award, value: '12+', label: 'Events' },
-    { icon: Calendar, value: '3', label: 'Years Active' },
-  ];
+  // Split into levels
+  const level1 = members.filter(m => m.level === 1);
+  const level2 = members.filter(m => m.level === 2);
+  const level3 = members.filter(m => m.level === 3);
+  const level4 = members.filter(m => m.level === 4 || !m.level);
 
-  const facultyMembers = [
-    {
-      name: 'Dr. Example HOD',
-      position: 'Head of Department',
-      email: 'hod.iete@mit.edu',
-      linkedin: 'linkedin.com/in/example-hod',
-      initials: 'EH',
-      tag: 'HOD',
-      gender: 'male',
-    },
-    {
-      name: 'Prof. Example Coordinator',
-      position: 'IETE Faculty Coordinator',
-      email: 'coordinator.iete@mit.edu',
-      linkedin: 'linkedin.com/in/example-coordinator',
-      initials: 'EC',
-      tag: 'Coordinator',
-      gender: 'male',
-    },
-  ];
+  // Group level 3 & 4 by department
+  const groupByDept = (list) => {
+    return list.reduce((acc, m) => {
+      const dept = m.department || 'General';
+      if (!acc[dept]) acc[dept] = [];
+      acc[dept].push(m);
+      return acc;
+    }, {});
+  };
 
-  const studentMembers = [
-    { name: 'CHAITANYA MOHARE',    position: 'Chairperson',         gender: 'male'   },
-    { name: 'SOHAM HARNE',         position: 'Co-Chairperson',      gender: 'male'   },
-    { name: 'RUSHIKESH KHARCHAN',  position: 'Co-Chairperson',      gender: 'male'   },
-    { name: 'INAYA KHAN',          position: 'Event Head',          gender: 'female' },
-    { name: 'RUSHIKESH MUNDHE',    position: 'Event Head',          gender: 'male'   },
-    { name: 'OM RAUT',             position: 'Co-Event Head',       gender: 'male'   },
-    { name: 'ANUSHKA DESHMUKH',    position: 'Co-Event Head',       gender: 'female' },
-    { name: 'SUSMIT KULKARNI',     position: 'Technical Head',      gender: 'male'   },
-    { name: 'SHRIKANT DHOTRE',     position: 'Technical Head',      gender: 'male'   },
-    { name: 'ABHIJEET GORE',       position: 'Co-Technical Head',   gender: 'male'   },
-    { name: 'GARGI MORE',          position: 'Creative Head',       gender: 'female' },
-    { name: 'SAHIL MAHADIK',       position: 'Creative Head',       gender: 'male'   },
-    { name: 'PRACHI RAGUGURU',     position: 'Co-Creative Head',    gender: 'female' },
-    { name: 'RAGINI GAJBHIYE',     position: 'Co-Creative Head',    gender: 'female' },
-    { name: 'SANSKRUTI GHUGE',     position: 'Social Media Head',   gender: 'female' },
-    { name: 'SHIVAM BADGUJAR',     position: 'Social Media Head',   gender: 'male'   },
-    { name: 'NEHA GOLAIT',         position: 'Co-Social Media Head',gender: 'female' },
-    { name: 'PRATIKSHA SARAF',     position: 'Co-Social Media Head',gender: 'female' },
-    { name: 'VAIBHAV DALVI',       position: 'Sports Head',         gender: 'male'   },
-    { name: 'RUDRAPRATAP GONDHALE',position: 'Sports Head',         gender: 'male'   },
-    { name: 'SHEIKH SAHIL RAFIK',  position: 'Co-Sports Head',      gender: 'male'   },
-    { name: 'KEDAR BALI',          position: 'Co-Sports Head',      gender: 'male'   },
-    { name: 'SIDDHESH KULKARNI',   position: 'Secretary',           gender: 'male'   },
-    { name: 'NEHA DAHIHANDE',      position: 'Secretary',           gender: 'female' },
-    { name: 'SANIKA PATIL',        position: 'Treasurer',           gender: 'female' },
-    { name: 'RAHIL KHAN',          position: 'Treasurer',           gender: 'male'   },
-    { name: 'SHIVAM AMBILWADE',    position: 'Co-Treasurer',        gender: 'male'   },
-    { name: 'RENUKA JOSHI',        position: 'Co-Treasurer',        gender: 'female' },
-  ].map((m) => ({
-    ...m,
-    initials: m.name.split(' ').map((w) => w[0]).join('').slice(0, 2),
-    email: `${m.name.toLowerCase().replace(/\s+/g, '.')}@iete-mit.com`,
-    linkedin: `linkedin.com/in/${m.name.toLowerCase().replace(/\s+/g, '-')}`,
-  }));
-
-  // Use Firestore members (from admin) if available, otherwise fall back to hardcoded
-  const displayMembers = firestoreMembers
-    ? firestoreMembers.map((m) => ({
-        ...m,
-        initials: m.name.split(' ').map((w) => w[0]).join('').slice(0, 2),
-        linkedin: m.linkedin || `linkedin.com/in/${m.name.toLowerCase().replace(/\s+/g, '-')}`,
-        gender: 'male', // default (Firestore doesn't store gender)
-      }))
-    : studentMembers;
+  const coreByDept = groupByDept(level3);
+  const volunteersByDept = groupByDept(level4);
 
   const positionColors = {
     'Chairperson': '#982598',
-    'Co-Chairperson': '#7B1FA2',
-    'Event Head': '#C2185B',
-    'Co-Event Head': '#E91E8C',
-    'Technical Head': '#1565C0',
-    'Co-Technical Head': '#1976D2',
-    'Creative Head': '#E65100',
-    'Co-Creative Head': '#F57C00',
-    'Social Media Head': '#00838F',
-    'Co-Social Media Head': '#00ACC1',
-    'Sports Head': '#2E7D32',
-    'Co-Sports Head': '#43A047',
+    'Vice Chair': '#7B1FA2',
     'Secretary': '#6A1B9A',
     'Treasurer': '#AD1457',
-    'Co-Treasurer': '#D81B60',
+    'Technical Head': '#1565C0',
+    'Creative Head': '#E65100',
+    'Event Head': '#C2185B',
   };
 
   return (
     <div className="team-page">
-
-      {/* ── HERO ── */}
       <section className="team-hero" ref={heroRef}>
         <div className="hero-spotlight" />
-        <div className="hero-mesh" />
-        <div className="floating-shapes">
-          <div className="shape shape-1" />
-          <div className="shape shape-2" />
-          <div className="shape shape-3" />
-          <div className="shape shape-4" />
-        </div>
-        <div className="particles">
-          {[...Array(10)].map((_, i) => <div key={i} className="particle" />)}
-        </div>
-
-        <motion.div
-          className="team-hero-content"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 1, ease: 'easeOut' }}
-        >
+        <div className="team-hero-content">
           <h1 className="hero-heading">
-            <span className="hero-line">
-              {headingWords1.map((word, i) => (
-                <motion.span
-                  key={i}
-                  className="word"
-                  initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 0.2 + i * 0.12, duration: 0.55, ease: 'easeOut' }}
-                >
-                  {word}{' '}
-                </motion.span>
-              ))}
-              <motion.span
-                className="word gradient-text"
-                initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-                animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                transition={{ delay: 0.44, duration: 0.55, ease: 'easeOut' }}
-              >
-                Innovators
-              </motion.span>
-            </span>
-            <span className="hero-line">
-              {headingWords2.map((word, i) => (
-                <motion.span
-                  key={i}
-                  className="word"
-                  initial={{ opacity: 0, y: 30, filter: 'blur(8px)' }}
-                  animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-                  transition={{ delay: 0.56 + i * 0.12, duration: 0.55, ease: 'easeOut' }}
-                >
-                  {word}{' '}
-                </motion.span>
-              ))}
-            </span>
+            <span className="hero-line">Meet the <span className="gradient-text">Innovators</span></span>
+            <span className="hero-line">Behind the Mission</span>
           </h1>
-
-          <p>
-            Passionate students and faculty driving innovation, events, and
-            technology initiatives within the IETE community.
-          </p>
-
-          <div className="hero-buttons">
-            <button className="btn-primary">
-              <span>Join Our Community</span>
-            </button>
-            <button className="btn-secondary">
-              <span>Contact Team</span>
-            </button>
-          </div>
-
-          <div className="hero-stats">
-            {stats.map(({ icon: Icon, value, label }, i) => (
-              <motion.div
-                key={i}
-                className="stat-item"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.6 + i * 0.15 }}
-              >
-                <Icon size={18} className="stat-icon" />
-                <span className="stat-value">{value}</span>
-                <span className="stat-label">{label}</span>
-              </motion.div>
-            ))}
-          </div>
-        </motion.div>
-
-        <motion.div
-          className="scroll-indicator"
-          animate={{ y: [0, 10, 0] }}
-          transition={{ repeat: Infinity, duration: 1.8 }}
-        >
-          <ChevronDown size={24} color="rgba(255,255,255,0.7)" />
-        </motion.div>
-      </section>
-
-      {/* ── FACULTY ── */}
-      <section className="faculty-section">
-        <motion.div className="section-header" {...fadeUp()}>
-          <span className="section-eyebrow">Leadership</span>
-          <h2 className="section-title">Faculty Mentors</h2>
-          <p className="section-subtitle">
-            The guiding pillars of IETE MIT Student Chapter
-          </p>
-        </motion.div>
-
-        <div className="faculty-grid">
-          {facultyMembers.map((member, i) => (
-            <motion.div
-              key={i}
-              className="faculty-card"
-              {...fadeUp(i * 0.18)}
-            >
-              <Tilt
-                tiltMaxAngleX={10}
-                tiltMaxAngleY={10}
-                glareEnable={true}
-                glareMaxOpacity={0.15}
-                glareColor="#e491c9"
-                glarePosition="all"
-                scale={1.03}
-                style={{ borderRadius: '1.5rem', width: '100%' }}
-              >
-              <div className="card-glow" />
-              <div className="faculty-top">
-                <div className="avatar-ring">
-                  <img
-                    className="avatar-large"
-                    src={member.photoURL || getAvatarUrl(member.name, member.gender)}
-                    alt={member.name}
-                  />
-                </div>
-                <span className="role-tag">{member.tag}</span>
-              </div>
-              <div className="faculty-body">
-                <h3>{member.name}</h3>
-                <p className="position">{member.position}</p>
-                <div className="divider" />
-                <div className="contact-info">
-                  <a href={`mailto:${member.email}`}>
-                    <Mail size={16} />
-                    <span>{member.email}</span>
-                  </a>
-                  <a href={`https://${member.linkedin}`} target="_blank" rel="noopener noreferrer">
-                    <Linkedin size={16} />
-                    <span>{member.linkedin}</span>
-                  </a>
-                </div>
-              </div>
-              </Tilt>
-            </motion.div>
-          ))}
+          <p>The dedicated team driving technology and leadership at IETE MIT Student Chapter.</p>
         </div>
       </section>
 
-      {/* ── STUDENTS ── */}
-      <section className="student-section">
-        <motion.div className="section-header" {...fadeUp()}>
-          <span className="section-eyebrow">Core Team</span>
-          <h2 className="section-title">Student Members</h2>
-          <p className="section-subtitle">
-            The passionate minds building IETE MIT&apos;s future
-          </p>
-        </motion.div>
+      {loading ? (
+        <div style={{ padding: '100px 0', textAlign: 'center' }}><Loader2 className="spinner" size={40} color={G} /></div>
+      ) : (
+        <>
+          {/* Level 1: Leadership */}
+          {level1.length > 0 && (
+            <section className="student-section">
+              <div className="section-header">
+                <h2 className="section-title">Leadership</h2>
+              </div>
+              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 32 }}>
+                {level1.map((m, i) => (
+                  <FlipCard key={m.id} member={m} index={i} positionColors={positionColors} positionDescriptions={positionDescriptions} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        <div className="student-grid">
-          {displayMembers.map((member, i) => (
-            <FlipCard
-              key={i}
-              member={member}
-              index={i}
-              positionColors={positionColors}
-              positionDescriptions={positionDescriptions}
-            />
-          ))}
-        </div>
-      </section>
+          {/* Level 2: Vice Leadership */}
+          {level2.length > 0 && (
+            <section className="student-section" style={{ paddingTop: 0 }}>
+              <div style={{ display: 'flex', justifyContent: 'center', flexWrap: 'wrap', gap: 24 }}>
+                {level2.map((m, i) => (
+                  <FlipCard key={m.id} member={m} index={i + 10} positionColors={positionColors} positionDescriptions={positionDescriptions} />
+                ))}
+              </div>
+            </section>
+          )}
 
+          {/* Level 3: Core Team by Departments */}
+          <section className="student-section">
+            <div className="section-header">
+              <h2 className="section-title">Core Team</h2>
+            </div>
+            <div className="wing-columns">
+              {Object.keys(coreByDept).map((dept, idx) => (
+                <div key={dept} className="wing-column">
+                  <h4 className="wing-title">{dept} Wing</h4>
+                  <div className="wing-cards">
+                    {coreByDept[dept].map((m, i) => (
+                      <FlipCard key={m.id} member={m} index={i + idx * 20} positionColors={positionColors} positionDescriptions={positionDescriptions} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
 
+          {/* Level 4: Volunteers */}
+          {level4.length > 0 && (
+            <section className="student-section">
+              <div className="section-header">
+                <h2 className="section-title">Volunteers</h2>
+              </div>
+              <div className="wing-columns">
+                {Object.keys(volunteersByDept).map((dept, idx) => (
+                  <div key={dept} className="wing-column">
+                    <h4 className="wing-title">{dept}</h4>
+                    <div className="wing-cards">
+                      {volunteersByDept[dept].map((m, i) => (
+                        <FlipCard key={m.id} member={m} index={i + idx * 50} positionColors={positionColors} positionDescriptions={positionDescriptions} />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+      <style>{`.spinner { animation: spin 0.8s linear infinite; } @keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

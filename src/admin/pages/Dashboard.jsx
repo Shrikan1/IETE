@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getEvents, getAchievements, getGallery, getTeam } from '../../firebase/firestore';
+import { getEvents, getAchievements, getGallery, getTeam } from '../../supabase/db';
 import { CalendarCheck, Trophy, ImageIcon, Users, ArrowUpRight, TrendingUp, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
@@ -8,7 +8,7 @@ const G = '#08CB00';
 
 const CARDS = [
   { label: 'Home Events',    key: 'events',       icon: CalendarCheck, to: '/admin/home-events',  badge: 'Events'  },
-  { label: 'Achievements',   key: 'achievements', icon: Trophy,        to: '/admin/achievements', badge: 'Active'  },
+  { label: 'achievements',   key: 'achievements', icon: Trophy,        to: '/admin/achievements', badge: 'Active'  },
   { label: 'Gallery Albums', key: 'gallery',      icon: ImageIcon,     to: '/admin/gallery',      badge: 'Albums'  },
   { label: 'Team Members',   key: 'team',         icon: Users,         to: '/admin/team',         badge: 'Members' },
 ];
@@ -28,8 +28,9 @@ export default function Dashboard() {
   useEffect(() => {
     Promise.all([getEvents(), getAchievements(), getGallery(), getTeam()])
       .then(([ev, ac, ga, tm]) =>
-        setStats({ events: ev.length, achievements: ac.length, gallery: ga.length, team: tm.length })
+        setStats({ events: ev?.length || 0, achievements: ac?.length || 0, gallery: ga?.length || 0, team: tm?.length || 0 })
       )
+      .catch(err => console.error("Error loading dashboard stats:", err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -170,7 +171,7 @@ export default function Dashboard() {
           <h2 style={{ color: '#fff', fontWeight: 700, fontSize: 15, margin: '0 0 18px' }}>Getting Started</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
             {[
-              { step: '01', text: 'Add Firebase credentials to config.js' },
+              { step: '01', text: 'Add Supabase credentials to .env' },
               { step: '02', text: 'Add featured events via Home Events' },
               { step: '03', text: 'Upload team photos in Team Management' },
               { step: '04', text: 'Create an Event Gallery album' },

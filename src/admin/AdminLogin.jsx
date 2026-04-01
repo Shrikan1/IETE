@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { signIn } from '../firebase/auth';
+import { signIn } from '../supabase/auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lock, Mail, Eye, EyeOff, ArrowRight, ShieldCheck } from 'lucide-react';
 
@@ -20,10 +20,13 @@ export default function AdminLogin() {
     setError('');
     setLoading(true);
     try {
-      await signIn(email, password);
+      console.log("AdminLogin: Attempting sign-in for", email);
+      const user = await signIn(email, password);
+      console.log("AdminLogin: Sign-in successful for", user.email);
       window.location.replace('/admin');
-    } catch {
-      setError('Invalid email or password.');
+    } catch (err) {
+      console.error("AdminLogin: Sign-in failed:", err);
+      setError(err.message || 'Invalid email or password.');
       setLoading(false);
     }
   }

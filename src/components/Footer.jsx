@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getSettings } from '../supabase/db';
+import { Instagram, Linkedin, Twitter, Mail } from 'lucide-react';
 import './Footer.css';
 
 const navLinks = [
@@ -10,6 +13,11 @@ const navLinks = [
 
 const Footer = ({ logoRef }) => {
   const navigate = useNavigate();
+  const [settings, setSettings] = useState(null);
+
+  useEffect(() => {
+    getSettings().then(setSettings).catch(err => console.error("Error loading settings:", err));
+  }, []);
 
   return (
     <footer className="site-footer">
@@ -21,12 +29,19 @@ const Footer = ({ logoRef }) => {
         {/* ── Brand row ── */}
         <div className="footer-brand-row">
           <div className="footer-logo-circle" ref={logoRef}>
-            <span className="footer-logo-text">IETE</span>
+            <span className="footer-logo-text"></span>
           </div>
           <div className="footer-brand-info">
             <h2 className="footer-brand-name">IETE Student Forum</h2>
-            <p className="footer-brand-tagline">Innovating Electronics &amp; Computer Engineering</p>
-            
+            <p className="footer-brand-tagline">{settings?.heroSubtitle || 'Innovating Electronics & Communication Engineering'}</p>
+            {settings && (
+              <div style={{ display: 'flex', gap: 12, marginTop: 16 }}>
+                {settings.instagram && <a href={settings.instagram} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.4)', transition: 'color 0.3s' }} onMouseEnter={e => e.target.style.color='#08CB00'} onMouseLeave={e => e.target.style.color='rgba(255,255,255,0.4)'}><Instagram size={18} /></a>}
+                {settings.linkedin && <a href={settings.linkedin} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.4)', transition: 'color 0.3s' }} onMouseEnter={e => e.target.style.color='#08CB00'} onMouseLeave={e => e.target.style.color='rgba(255,255,255,0.4)'}><Linkedin size={18} /></a>}
+                {settings.twitter && <a href={settings.twitter} target="_blank" rel="noreferrer" style={{ color: 'rgba(255,255,255,0.4)', transition: 'color 0.3s' }} onMouseEnter={e => e.target.style.color='#08CB00'} onMouseLeave={e => e.target.style.color='rgba(255,255,255,0.4)'}><Twitter size={18} /></a>}
+                {settings.email && <a href={`mailto:${settings.email}`} style={{ color: 'rgba(255,255,255,0.4)', transition: 'color 0.3s' }} onMouseEnter={e => e.target.style.color='#08CB00'} onMouseLeave={e => e.target.style.color='rgba(255,255,255,0.4)'}><Mail size={18} /></a>}
+              </div>
+            )}
           </div>
         </div>
 
